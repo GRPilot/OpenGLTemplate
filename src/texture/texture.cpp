@@ -2,34 +2,36 @@
 
 #include "texture.hpp"
 
-Texture::Texture(GLenum type, GLenum position) : ID(0), TYPE(type), POS(position) {
-    glGenTextures(1, &ID);
-    bind();
+Texture::Texture(GLenum type, GLenum position)
+    : mId{}, mType{ type }, mPos{ position }
+{
+    glGenTextures(1, &mId);
+    Bind();
 }
 
 Texture::~Texture() {
-    glDeleteTextures(1, &ID);
+    glDeleteTextures(1, &mId);
 }
 
-void Texture::set(GLenum pname, GLint value) {
-    glTextureParameteri(TYPE, pname, value);
+void Texture::Set(GLenum pname, GLint value) {
+    glTextureParameteri(mType, pname, value);
 }
 
-void Texture::bind() {
-    glActiveTexture(POS);
-    glBindTexture(TYPE, ID);
+void Texture::Bind() {
+    glActiveTexture(mPos);
+    glBindTexture(mType, mId);
 }
 
-void Texture::unbind() {
+void Texture::Unbind() {
     glActiveTexture(0);
-    glBindTexture(TYPE, 0);
+    glBindTexture(mType, 0);
 }
 
 GLenum Texture::id() const {
-    return ID;
+    return mId;
 }
 
 GLenum Texture::type() const {
-    return TYPE;
+    return mType;
 }
 

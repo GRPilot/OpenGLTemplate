@@ -2,9 +2,6 @@
 #include "mash.hpp"
 #include "plog/Log.h"
 
-#include "vertex.hpp"
-#include "shader.hpp"
-
 namespace {
     template<class T> inline GLsizei getLen(const std::vector<T> &vec) {
         return vec.size() * sizeof(T);
@@ -24,20 +21,19 @@ namespace {
     }
 }
 
-Mash::Mash(const std::vector<Vertex> &vertices,
-           const std::vector<GLuint> &indices,
-           std::shared_ptr<Shader> &mash_shader)
-    : draw_count(indices.size()), shader(mash_shader) {
-    if(!argsValid(vertices, indices, mash_shader)) {
+Mash::Mash(const Vertices &vertices, const std::vector<GLuint> &indices, Shader::Ref mashShader)
+    : mDrawCount{ indices.size() }, shader{ mashShader }
+{
+    if(!ArgsValid(vertices, indices, mashShader)) {
         LOGE << "[Mash] The arguments is not valid";
         return;
     }
-    LOGI << "[Mash] draw_count: " << draw_count;
+    LOGI << "[Mash] mDrawCount: " << mDrawCount;
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
-    shader->use();
+    shader->Use();
 
     glBindVertexArray(VAO);
 
@@ -47,27 +43,27 @@ Mash::Mash(const std::vector<Vertex> &vertices,
      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
      glBufferData(GL_ELEMENT_ARRAY_BUFFER, getLen(indices), &indices[0], GL_STATIC_DRAW);
 
-     int pos_id = shader->location("position", Shader::PropertyType::ATTRIBUTE);
-     glVertexAttribPointer(pos_id, Vertex::getPosCount(), GL_FLOAT, GL_FALSE,
-                           Vertex::getStride(), asVoidptr(Vertex::getPosOffset()));
+     int pos_id{ shader->Location("position", Shader::PropertyType::ATTRIBUTE) };
+     glVertexAttribPointer(pos_id, Vertex::GetPosCount(), GL_FLOAT, GL_FALSE,
+                           Vertex::GetStride(), asVoidptr(Vertex::GetPosOffset()));
      glEnableVertexAttribArray(pos_id);
 
-     int clr_id = shader->location("color", Shader::PropertyType::ATTRIBUTE);
-     glVertexAttribPointer(clr_id, Vertex::getClrCount(), GL_FLOAT, GL_FALSE,
-                           Vertex::getStride(), asVoidptr(Vertex::getClrOffset()));
+     int clr_id{ shader->Location("color", Shader::PropertyType::ATTRIBUTE) };
+     glVertexAttribPointer(clr_id, Vertex::GetClrCount(), GL_FLOAT, GL_FALSE,
+                           Vertex::GetStride(), asVoidptr(Vertex::GetClrOffset()));
      glEnableVertexAttribArray(clr_id);
 
-     int tex_id = shader->location("texCoord", Shader::PropertyType::ATTRIBUTE);
-     glVertexAttribPointer(tex_id, Vertex::getTexCount(), GL_FLOAT, GL_FALSE,
-                           Vertex::getStride(), asVoidptr(Vertex::getTexOffset()));
+     int tex_id{ shader->Location("texCoord", Shader::PropertyType::ATTRIBUTE) };
+     glVertexAttribPointer(tex_id, Vertex::GetTexCount(), GL_FLOAT, GL_FALSE,
+                           Vertex::GetStride(), asVoidptr(Vertex::GetTexOffset()));
      glEnableVertexAttribArray(tex_id);
      
     glBindVertexArray(0);
 
     // log what we build
-    printinfo("position", pos_id, Vertex::getPosCount(), Vertex::getPosOffset(), Vertex::getStride());
-    printinfo("color", clr_id, Vertex::getClrCount(), Vertex::getClrOffset(), Vertex::getStride());
-    printinfo("texCoord", tex_id, Vertex::getTexCount(), Vertex::getTexOffset(), Vertex::getStride());
+    printinfo("position", pos_id, Vertex::GetPosCount(), Vertex::GetPosOffset(), Vertex::GetStride());
+    printinfo("color", clr_id, Vertex::GetClrCount(), Vertex::GetClrOffset(), Vertex::GetStride());
+    printinfo("texCoord", tex_id, Vertex::GetTexCount(), Vertex::GetTexOffset(), Vertex::GetStride());
 
 }
 
@@ -77,23 +73,22 @@ Mash::~Mash() {
     glDeleteBuffers(1, &EBO);
 }
 
-void Mash::bind() {
-    shader->use();
+void Mash::Bind() {
+    shader->Use();
     glBindVertexArray(VAO);
 }
-void Mash::unbind() {
+void Mash::Unbind() {
     glBindVertexArray(0);
-    shader->unuse();
+    shader->UnUse();
 }
 
-void Mash::draw() {
-    glDrawElements(GL_TRIANGLES, draw_count, GL_UNSIGNED_INT, nullptr);
+void Mash::Draw() {
+    glDrawElements(GL_TRIANGLES, mDrawCount, GL_UNSIGNED_INT, nullptr);
 }
 
-bool Mash::argsValid(const std::vector<Vertex> &vertices,
-                     const std::vector<GLuint> &indices,
+bool Mash::ArgsValid(const std::vector<Vertex> &vertices, const std::vector<GLuint> &indices,
                      std::shared_ptr<Shader> &mash_shader) const {
-    bool valid = true;
+    bool valid{ true };
     if(vertices.empty()) {
         valid = false;
         LOGE << "[Mash] The vertices array is empty";

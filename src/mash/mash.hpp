@@ -1,31 +1,31 @@
 #ifndef __MASH_H__
 #define __MASH_H__
 
+#include "shader.hpp"
+#include "vertex.hpp"
+
 struct Vertex;
 class Shader;
 
 class Mash {
 public:
-    explicit Mash(const std::vector<Vertex> &vertices,
-                  const std::vector<GLuint> &indices,
-                  std::shared_ptr<Shader> &mash_shader);
+    Mash(const Vertices &vertices, const std::vector<GLuint> &indices, Shader::Ref mashShader);
     ~Mash();
 
-    void bind();
-    void unbind();
-    void draw();
+    void Bind();
+    void Unbind();
+    void Draw();
 
 private:
-    size_t draw_count;
-    std::shared_ptr<Shader> shader;
+    size_t mDrawCount;
+    Shader::Ref shader;
 
     GLuint VAO;
     GLuint VBO;
     GLuint EBO;
 
-    bool argsValid(const std::vector<Vertex> &vertices,
-                        const std::vector<GLuint> &indices,
-                        std::shared_ptr<Shader> &mash_shader) const;
+    bool ArgsValid(const Vertices &vertices, const std::vector<GLuint> &indices,
+                Shader::Ref &mashShader) const;
 };
 
 #endif // __MASH_H__

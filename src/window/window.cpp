@@ -4,7 +4,8 @@
 #include "window.hpp"
 
 Window::Window(const glm::vec2 &size, const std::string &title)
-    : wnd(nullptr) {
+    : wnd{ nullptr }
+{
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -17,12 +18,14 @@ Window::Window(const glm::vec2 &size, const std::string &title)
     setupWindowSettings();
 }
 
-Window::Window(GLFWmonitor *monitor, const std::string &title) : wnd(nullptr) {
+Window::Window(GLFWmonitor *monitor, const std::string &title)
+    : wnd{ nullptr }
+{
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+    const auto *mode{ glfwGetVideoMode(monitor) };
     glfwWindowHint(GLFW_RED_BITS, mode->redBits);
     glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
     glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
@@ -76,14 +79,14 @@ void Window::update() {
     glfwSwapBuffers(wnd);
 }
 
-bool Window::isAvtive() const {
+bool Window::isActive() const {
     return nullptr != wnd && !glfwWindowShouldClose(wnd);
 }
 
 bool Window::isPressed(unsigned key) {
-    static unsigned last_key = 0;
+    static unsigned last_key{};
 
-    int status = glfwGetKey(wnd, key);
+    int status{ glfwGetKey(wnd, key) };
     switch(status) {
         case GLFW_PRESS:
             last_key = key;
@@ -102,14 +105,14 @@ bool Window::isHold(unsigned key) {
 }
 
 size_t Window::width() const {
-    int width = 0;
+    int width{};
     glfwGetWindowSize(wnd, &width, nullptr);
     if(width < 0) width = 0;
     return static_cast<size_t>(width);
 }
 
 size_t Window::height() const {
-    int height = 0;
+    int height{};
     glfwGetWindowSize(wnd, nullptr, &height);
     if(height < 0) height = 0;
     return static_cast<size_t>(height);
@@ -121,7 +124,7 @@ GLFWwindow* Window::handler() {
 
 void Window::setupWindowSettings() {
     IMGUI_CHECKVERSION();
-    ImGuiContext *ctx = ImGui::CreateContext();
+    auto *ctx{ ImGui::CreateContext() };
     if(nullptr == ctx) {
         LOGE << "[ImGui] Cannot create context";
     }

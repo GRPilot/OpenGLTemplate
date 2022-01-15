@@ -5,9 +5,10 @@ struct GLFWwindow;
 
 class Window {
 public:
+    using Ref = std::shared_ptr<Window>;
     using Event = int (*)();
-    explicit Window(const glm::vec2 &size, const std::string &title);
-    explicit Window(GLFWmonitor *monitor, const std::string &title);
+    Window(const glm::vec2 &size, const std::string &title);
+    Window(GLFWmonitor *monitor, const std::string &title);
     virtual ~Window();
 
     Window &add_event(Event e);
@@ -17,7 +18,7 @@ public:
     void clear(const glm::vec4 &clr);
     void update();
 
-    bool isAvtive() const;
+    bool isActive() const;
     bool isPressed(unsigned key);
     bool isHold(unsigned key);
 

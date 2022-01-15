@@ -8,7 +8,7 @@
 
 namespace {
     struct Img {
-        GLubyte *source;
+        GLubyte *source{ nullptr };
         int width{-1};
         int height{-1};
         int nrChannels{-1};
@@ -60,9 +60,9 @@ public:
             return TextureError::CannotLoadSource;
         }
 
-        glTexImage2D(TYPE, 0, image.getChannels(), image.width, image.height,
+        glTexImage2D(mType, 0, image.getChannels(), image.width, image.height,
                      0, image.getChannels(), GL_UNSIGNED_BYTE, image.source);
-        glGenerateMipmap(TYPE);
+        glGenerateMipmap(mType);
 
         return TextureError::NoError;
     }
@@ -70,24 +70,24 @@ public:
 
 //== == == == == == == == == == = TextureGenerator = == == == == == == == == == ==//
 
-TexturePtr TextureGenerator::gen(const std::string &filename, ShaderPtr shader, GLenum type) {
+Texture::Ref TextureGenerator::Gen(const std::string &filename, Shader::Ref shader, GLenum type) {
     Params defaultParams {
         std::make_pair(GL_TEXTURE_WRAP_S, GL_REPEAT),
         std::make_pair(GL_TEXTURE_WRAP_T, GL_REPEAT),
         std::make_pair(GL_TEXTURE_MIN_FILTER, GL_LINEAR),
         std::make_pair(GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     };
-    return gen(filename, shader, defaultParams, type);
+    return Gen(filename, shader, defaultParams, type);
 }
 
-TexturePtr TextureGenerator::gen(const std::string &filename, ShaderPtr shader, const Params &params, GLenum type) {
+Texture::Ref TextureGenerator::Gen(const std::string &filename, Shader::Ref shader, const Params &params, GLenum type) {
     static GLenum position = GL_TEXTURE0;
     if(GL_TEXTURE31 == position) {
         LOGW << "[TextureGenerator] Cannot create texture: the all slots was filles";
         return nullptr;
     }
 
-    TexturePtr texture;
+    Texture::Ref texture;
     switch(type) {
         case GL_TEXTURE_2D:
             texture = std::make_shared<Texture2D>(type, position);
@@ -98,16 +98,16 @@ TexturePtr TextureGenerator::gen(const std::string &filename, ShaderPtr shader, 
     }
 
     for(const auto &param : params) {
-        texture->set(param.first, param.second);
+        texture->Set(param.first, param.second);
     }
 
-    TextureError status = texture->load(filename);
+    TextureError status{ texture->load(filename) };
     if(TextureError::NoError != status) {
         LOGE << "[TextureGenerator] The loading was failed: " << static_cast<int>(status);
     }
-    int id = position - GL_TEXTURE0;
+    int id{ static_cast<int>(position) - GL_TEXTURE0 };
     LOGI << "[TextureGenerator] The texture id: " << id;
-    shader->set("sample_" + std::to_string(id), id);
+    shader->Set("sample_" + std::to_string(id), id);
     ++position;
     return texture;
 }

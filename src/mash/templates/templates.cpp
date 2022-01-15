@@ -60,7 +60,7 @@ TemplateGenerator::Template square(float scale) {
 } // anon namespace
 //=============================== GENERATOR ===============================//
 
-TemplateGenerator::Template TemplateGenerator::generate(TemplateType type, float scale) {
+TemplateGenerator::Template TemplateGenerator::Generate(TemplateType type, float scale) {
     switch(type) {
         case TemplateType::TRIANGLE:
             return triangle(scale);

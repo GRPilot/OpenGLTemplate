@@ -19,75 +19,76 @@ int main() {
         return 1;
     }
 
-    Window window({1024, 600}, "OpenGLRem"); // windowed screen
-    // Window window(glfwGetPrimaryMonitor(), "OpenGL + ImGui | Ravesli lesson 7"); // fullscreen
-    if(!window.isAvtive()) {
+    Window::Ref window{ new Window{ {1024, 600}, "OpenGLRem" } }; // windowed screen
+    // Window::Ref window{ new Window{ glfwGetPrimaryMonitor(), "OpenGLRem" } }; // fullscreen
+    if(!window->isActive()) {
         return 2;
     }
-    const float scaleCoef = window.height() / static_cast<float>(window.width());
+    const float scaleCoef{ window->height() / static_cast<float>(window->width()) };
     LOGI << "[main] scaleCoef coef: " << scaleCoef;
 
-    if(GLenum rc = glewInit(); GL_NO_ERROR != rc) {
+    if(auto rc{ glewInit() }; GL_NO_ERROR != rc) {
         LOGE << "[GLEW] Cannot initialize GLEW: " << rc;
         return 3;
     }
 
-    std::shared_ptr<Shader> shader = std::make_shared<Shader>(
+    std::shared_ptr<Shader> shader{ new Shader {
         "resources/shaders/vs.glsl",
-        "resources/shaders/fs.glsl");
+        "resources/shaders/fs.glsl"
+    } };
 
-    if(!shader->success()) {
-        auto error{ shader->getLastError() };
+    if(!shader->Valide()) {
+        auto error{ shader->GetLastError() };
         LOGE << "[main] Cannot create shader: " << error->what;
         return error->code;
     }
 
-    TemplateGenerator::Template triangle_template {
-        TemplateGenerator::generate(TemplateType::SQUARE, 5)
+    TemplateGenerator::Template triangleTemplate {
+        TemplateGenerator::Generate(TemplateType::SQUARE, 5)
     };
-    Mash triangle(triangle_template.first, triangle_template.second, shader);
+    Mash triangle(triangleTemplate.first, triangleTemplate.second, shader);
 
-    shader->use();
-    std::vector<TexturePtr> textures {
-        TextureGenerator::gen("resources/textures/texture_0.jpeg", shader),
-        TextureGenerator::gen("resources/textures/texture_1.png", shader)
+    shader->Use();
+    std::vector<Texture::Ref> textures {
+        TextureGenerator::Gen("resources/textures/texture_0.jpeg", shader),
+        TextureGenerator::Gen("resources/textures/texture_1.png", shader)
     };
 
     glm::vec4 bgcolor{.3f, .2f, .4f, 1.0f};
-    float mix_value = 0.8f;
-    int texId = 0;
-    float angle = 0.0f;
-    float xAngle = 0.0f;
-    float yAngle = 0.0f;
+    float mixValue{ 0.8f };
+    int texId{ 0 };
+    float angle{ 0.0f };
+    float xAngle{ 0.0f };
+    float yAngle{ 0.0f };
 
-    while(window.isAvtive()) {
-        window.poll_events();
-        window.clear(bgcolor);
+    while(window->isActive()) {
+        window->poll_events();
+        window->clear(bgcolor);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame(); 
 
-        shader->use();
-        glm::mat4 transformation = glm::mat4(1.0f);
+        shader->Use();
+        glm::mat4 transformation{ 1.0f };
         transformation = glm::rotate(transformation, angle, glm::vec3{0, 0, 1});
         transformation = glm::rotate(transformation, xAngle, glm::vec3{1, 0, 0});
         transformation = glm::rotate(transformation, yAngle, glm::vec3{0, 1, 0});
         transformation = glm::scale(transformation, glm::vec3{scaleCoef, 1, 0});
-        shader->set("transform", transformation);
-        shader->set("mix_value", mix_value);
-        shader->set("texId", texId);
-        shader->unuse();
+        shader->Set("transform", transformation);
+        shader->Set("mix_value", mixValue);
+        shader->Set("tex_id", texId);
+        shader->UnUse();
 
-        textures[texId]->bind();
-        triangle.bind();
-        triangle.draw();
-        triangle.unbind();
-        textures[texId]->unbind();
+        textures[texId]->Bind();
+        triangle.Bind();
+        triangle.Draw();
+        triangle.Unbind();
+        textures[texId]->Unbind();
 
         ImGui::Begin("Settings");
             ImGui::TextWrapped("Shader settings:");
-            ImGui::SliderFloat("Texture mix value", &mix_value, 0.0f, 1.0f);
+            ImGui::SliderFloat("Texture mix value", &mixValue, 0.0f, 1.0f);
             ImGui::SliderAngle("Rotation", &angle);
             ImGui::SliderAngle("X", &xAngle);
             ImGui::SliderAngle("Y", &yAngle);
@@ -102,7 +103,7 @@ int main() {
 
         ImGui::Begin("Textures");
             for(size_t i = 0; i < textures.size(); ++i) {
-                ImTextureID id = reinterpret_cast<ImTextureID>(textures[i]->id());
+                auto id{ reinterpret_cast<ImTextureID>(textures[i]->id()) };
                 if(ImGui::ImageButton(id, ImVec2{128, 128}, ImVec2{0, 1}, ImVec2{1, 0})) {
                     LOGI << "[Main] Update texture id: " << i;
                     texId = i;
@@ -115,6 +116,6 @@ int main() {
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        window.update();
+        window->update();
     }
 }

@@ -24,32 +24,32 @@ namespace {
 }
 
 Shader::Shader(const std::string &vShader, const std::string &fShader)
-    : prog(glCreateProgram()), lastError(nullptr) {
+    : prog{ glCreateProgram() }, lastError{ nullptr }
+{
     if(vShader.empty() || fShader.empty()) {
         lastError.reset(new ShaderError{"The pathes to shaders is empty.", -1});
         return;
     }
-
-    GLuint vertex = generateShader(GL_VERTEX_SHADER, vShader);
-    if(hasError(vertex, GL_COMPILE_STATUS)) {
-        const std::string err = getError(vertex, GL_SHADER);
+    auto onError = [&](GLuint id) {
+        const auto err{ getError(id, GL_SHADER) };
         LOGE << "[Shader] " << err;
         lastError.reset(new ShaderError{err, -2});
+    };
+
+    GLuint vertex{ generateShader(GL_VERTEX_SHADER, vShader) };
+    if(hasError(vertex, GL_COMPILE_STATUS)) {
+        onError(vertex);
     }
     GLuint fragment = generateShader(GL_FRAGMENT_SHADER, fShader);
     if(hasError(fragment, GL_COMPILE_STATUS)) {
-        const std::string err = getError(fragment, GL_SHADER);
-        LOGE << "[Shader] " << err;
-        lastError.reset(new ShaderError{err, -3});
+        onError(vertex);
     }
 
     glAttachShader(prog, vertex);
     glAttachShader(prog, fragment);
     glLinkProgram(prog);
     if(hasError(prog, GL_LINK_STATUS)) {
-        const std::string err = getError(vertex, GL_SHADER);
-        LOGE << "[Shader] " << err;
-        lastError.reset(new ShaderError{err, -3});
+        onError(prog);
     }
 }
 
@@ -57,16 +57,16 @@ Shader::~Shader() {
     glDeleteProgram(prog);
 }
 
-bool Shader::success() const {
+bool Shader::Valide() const {
     return !static_cast<bool>(lastError);
 }
 
-std::shared_ptr<ShaderError> Shader::getLastError() const {
+std::shared_ptr<ShaderError> Shader::GetLastError() const {
     return lastError;
 }
 
-int Shader::location(const std::string &property, PropertyType type) const {
-    GLint loc = -1;
+int Shader::Location(const std::string &property, PropertyType type) const {
+    GLint loc{ -1 };
     switch(type) {
         case PropertyType::UNIFORM:
             loc = glGetUniformLocation(prog, property.c_str());
@@ -78,39 +78,39 @@ int Shader::location(const std::string &property, PropertyType type) const {
     return loc;
 }
 
-void Shader::set(const std::string &property, float value) {
-    glUniform1f(this->location(property), value);
+void Shader::Set(const std::string &property, float value) {
+    glUniform1f(this->Location(property), value);
 }
 
-void Shader::set(const std::string &property, int value) {
-    glUniform1i(this->location(property), value);
+void Shader::Set(const std::string &property, int value) {
+    glUniform1i(this->Location(property), value);
 }
 
-void Shader::set(const std::string &property, bool value) {
-    glUniform1i(this->location(property), static_cast<int>(value));
+void Shader::Set(const std::string &property, bool value) {
+    glUniform1i(this->Location(property), static_cast<int>(value));
 }
 
-void Shader::set(const std::string &property, const glm::mat4 &value) {
-    glUniformMatrix4fv(this->location(property), 1, GL_FALSE, glm::value_ptr(value));
+void Shader::Set(const std::string &property, const glm::mat4 &value) {
+    glUniformMatrix4fv(this->Location(property), 1, GL_FALSE, glm::value_ptr(value));
 }
 
-void Shader::use() {
+void Shader::Use() {
     glUseProgram(prog);
 }
 
-void Shader::unuse() {
+void Shader::UnUse() {
     glUseProgram(0);
 }
 
 GLuint Shader::generateShader(GLenum type, const std::string &fpath) const {
-    std::string source = loadFormFile(fpath);
+    auto source{ loadFormFile(fpath) };
     if(source.empty()) {
         return 0;
     }
     LOGI << "[Shader] Load source from '" << fpath << "'";
     printSource(source);
-    GLuint shader = glCreateShader(type);
-    const char *src = source.c_str();
+    GLuint shader{ glCreateShader(type) };
+    const char *src{ source.c_str() };
     glShaderSource(shader, 1, &src, nullptr);
     glCompileShader(shader);
     LOGI << "[Shader] Generated shader: " << shader;
@@ -134,7 +134,7 @@ bool Shader::hasError(GLuint target, GLenum what) const {
     if(target == 0) {
         return false;
     }
-    int success;
+    int success{};
     if(GL_LINK_STATUS == what) {
         glGetProgramiv(target, what, &success);
     } else {
@@ -147,9 +147,9 @@ std::string Shader::getError(GLuint target, GLenum type) const {
     if(target == 0) {
         return "Failed while creating";
     }
-    char error[2048];
+    char error[2048]{};
     memset(error, 0, sizeof(error));
-    GLsizei errsize;
+    GLsizei errsize{};
     if(GL_PROGRAM == type) {
         glGetProgramInfoLog(target, sizeof(error), &errsize, error);
     } else {

@@ -10,7 +10,7 @@ enum class TemplateType {
 
 struct TemplateGenerator {
     using Template = std::pair<std::vector<Vertex>, std::vector<GLuint>>;
-    static Template generate(TemplateType type, float scale = 8.0f);
+    static Template Generate(TemplateType type, float scale = 8.0f);
 };
 
 #endif // __TRIANGLE_H__
