@@ -5,7 +5,7 @@ in vec2 TexCoord;
 
 uniform float mix_value;
 
-uniform int tex_id = 0;
+uniform int texId = 0;
 
 uniform sampler2D sample_0;
 uniform sampler2D sample_1;

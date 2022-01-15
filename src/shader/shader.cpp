@@ -13,13 +13,13 @@ namespace {
         std::string strline;
         for(const char c : src) {
             if('\n' == c) {
-                LOGI << "[Shader] " << ++line << " |" << strline;
+                LOGD << "[Shader] " << std::setw(4) << ++line << " | " << strline;
                 strline.clear();
                 continue;
             }
             strline += c;
         }
-        LOGI << "[Shader] " << ++line << " |" << strline;
+        LOGD << "[Shader] " << std::setw(4) << ++line << " | " << strline;
     }
 }
 
@@ -30,8 +30,8 @@ Shader::Shader(const std::string &vShader, const std::string &fShader)
         lastError.reset(new ShaderError{"The pathes to shaders is empty.", -1});
         return;
     }
-    auto onError = [&](GLuint id) {
-        const auto err{ getError(id, GL_SHADER) };
+    auto onError = [&](GLuint id, GLenum target = GL_SHADER) {
+        const auto err{ getError(id, target) };
         LOGE << "[Shader] " << err;
         lastError.reset(new ShaderError{err, -2});
     };
@@ -49,7 +49,7 @@ Shader::Shader(const std::string &vShader, const std::string &fShader)
     glAttachShader(prog, fragment);
     glLinkProgram(prog);
     if(hasError(prog, GL_LINK_STATUS)) {
-        onError(prog);
+        onError(prog, GL_PROGRAM);
     }
 }
 

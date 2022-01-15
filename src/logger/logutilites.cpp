@@ -63,27 +63,77 @@ private:
     }
 };
 
+class DefaultFormatter {
+public:
+    static util::nstring header() { }
+    static util::nstring format(const Record &record) {
+        tm t;
+        util::localtime_s(&t, &record.getTime().time);
+        util::nostringstream ss;
+        ss << PLOG_NSTR("[") << t.tm_year + 1900 << "-" << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_mon + 1 << PLOG_NSTR("-") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_mday << PLOG_NSTR("]");
+        ss << PLOG_NSTR("[") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_hour << PLOG_NSTR(":") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_min << PLOG_NSTR(":") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_sec << PLOG_NSTR(".") << std::setfill(PLOG_NSTR('0')) << std::setw(3) << record.getTime().millitm << PLOG_NSTR("]");
+        ss << PLOG_NSTR("[") << std::setfill(PLOG_NSTR(' ')) << std::setw(5) << std::left << severityToString(record.getSeverity()) << PLOG_NSTR("]");
+        ss << PLOG_NSTR("[") << record.getTid() << PLOG_NSTR("]");
+        ss << PLOG_NSTR("[Line:") << record.getLine() << PLOG_NSTR("] ");
+        ss << record.getMessage() << PLOG_NSTR("\n");
+        return ss.str();
+    }
+};
+
+class SimpleFormatter {
+public:
+    static util::nstring header() { }
+    static util::nstring format(const Record &record) {
+        tm t;
+        util::localtime_s(&t, &record.getTime().time);
+        util::nostringstream ss;
+        ss << PLOG_NSTR("[") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_hour << PLOG_NSTR(":") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_min << PLOG_NSTR(":") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_sec << PLOG_NSTR(".") << std::setfill(PLOG_NSTR('0')) << std::setw(3) << record.getTime().millitm << PLOG_NSTR("]");
+        ss << PLOG_NSTR("[") << std::setfill(PLOG_NSTR(' ')) << std::setw(5) << std::left << severityToString(record.getSeverity()) << PLOG_NSTR("]");
+        ss << GetName(record) << PLOG_NSTR(" ");
+        ss << record.getMessage() << PLOG_NSTR("\n");
+        return ss.str();
+    }
+
+private:
+    static util::nstring GetName(const Record &record) {
+        util::nostringstream ss;
+        ss << record.getFunc();
+        util::nstring name{ ss.str() };
+        util::nostringstream result;
+        if (auto cur{ name.find(PLOG_NSTR("::")) }; cur != util::nstring::npos) {
+            if (name.find(PLOG_NSTR("anon"))) {
+                result << PLOG_NSTR("[Anonymous@");
+            } else {
+                result << PLOG_NSTR("[") << record.getObject();
+            }
+            result << record.getLine() << PLOG_NSTR("]");
+        } else {
+            result << PLOG_NSTR("[") << name << PLOG_NSTR("]");
+        }
+        return result.str();
+    }
+};
+
 } // namespace plog
 
 namespace Utilites {
 
 void ImGuiLogVisualizer::Roll(ImVec4 &&clr, std::string &&msg) {
-    mRollingLog.emplace(clr, msg);
+    mRollingLog.emplace_back(clr, msg);
+    mUpdated = true;
 }
 void ImGuiLogVisualizer::Clear() {
     mRollingLog = {};
 }
 void ImGuiLogVisualizer::Draw() {
-    if (mRollingLog.empty()) {
-        return;
-    }
     ImGui::Begin("Logs");
-    while (!mRollingLog.empty()) {
-        auto [clr, msg] { mRollingLog.front() };
-        mRollingLog.pop();
+    for (const auto &[clr, msg] : mRollingLog) {
         ImGui::TextColored(clr, "%s", msg.c_str());
     }
-    ImGui::SetScrollY(ImGui::GetScrollMaxY());
+    if (mUpdated) {
+        ImGui::SetScrollY(ImGui::GetScrollMaxY());
+        mUpdated = false;
+    }
     ImGui::End();
 
 }
@@ -102,9 +152,9 @@ void LogHelper::Initialize(plog::Severity level) {
 
     mVisualizer = std::make_shared<ImGuiLogVisualizer>();
 
-    static plog::ColorConsoleAppender<plog::TxtFormatter> Console;
+    static plog::ColorConsoleAppender<plog::DefaultFormatter> Console;
     static plog::RollingFileAppender<plog::TxtFormatter> File{ logfile.c_str() };
-    static plog::ImGuiAppender<plog::TxtFormatter> ImGuiWidget{ mVisualizer };
+    static plog::ImGuiAppender<plog::SimpleFormatter> ImGuiWidget{ mVisualizer };
 
     plog::init(level, logfile.c_str())
         .addAppender(&Console)

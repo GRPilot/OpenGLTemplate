@@ -17,7 +17,8 @@ public:
     void Draw();
 
 private:
-    std::queue<Log> mRollingLog;
+    std::vector<Log> mRollingLog;
+    bool mUpdated{ false };
 };
 
 class LogHelper : public plog::util::Singleton<LogHelper> {

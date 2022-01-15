@@ -8,6 +8,9 @@
 #include "texturegen.hpp"
 #include "texture.hpp"
 
+template<class T>
+using Param = std::pair<bool, T>;
+
 void onGlfwError(int error, const char *descr) {
     LOGE << "[GLFW] Code: " << error << ", Description: " << descr;
 }
@@ -19,7 +22,7 @@ int main() {
         return 1;
     }
 
-    Window::Ref window{ new Window{ {1024, 600}, "OpenGLRem" } }; // windowed screen
+    Window::Ref window{ new Window{ {1370, 900}, "OpenGLRem" } }; // windowed screen
     // Window::Ref window{ new Window{ glfwGetPrimaryMonitor(), "OpenGLRem" } }; // fullscreen
     if(!window->isActive()) {
         return 2;
@@ -55,11 +58,11 @@ int main() {
     };
 
     glm::vec4 bgcolor{.3f, .2f, .4f, 1.0f};
-    float mixValue{ 0.8f };
-    int texId{ 0 };
-    float angle{ 0.0f };
-    float xAngle{ 0.0f };
-    float yAngle{ 0.0f };
+    Param<float> mixValue{ true, 0.8f };
+    Param<float> angle{ true, 0.0f };
+    Param<float> xAngle{ true, 0.0f };
+    Param<float> yAngle{ true, 0.0f };
+    int texId{};
 
     while(window->isActive()) {
         window->poll_events();
@@ -70,14 +73,18 @@ int main() {
         ImGui::NewFrame(); 
 
         shader->Use();
-        glm::mat4 transformation{ 1.0f };
-        transformation = glm::rotate(transformation, angle, glm::vec3{0, 0, 1});
-        transformation = glm::rotate(transformation, xAngle, glm::vec3{1, 0, 0});
-        transformation = glm::rotate(transformation, yAngle, glm::vec3{0, 1, 0});
-        transformation = glm::scale(transformation, glm::vec3{scaleCoef, 1, 0});
-        shader->Set("transform", transformation);
-        shader->Set("mix_value", mixValue);
-        shader->Set("tex_id", texId);
+        if (angle.first || xAngle.first || yAngle.first) {
+            glm::mat4 transformation{ 1.0f };
+            transformation = glm::rotate(transformation, angle.second, glm::vec3{0, 0, 1});
+            transformation = glm::rotate(transformation, xAngle.second, glm::vec3{1, 0, 0});
+            transformation = glm::rotate(transformation, yAngle.second, glm::vec3{0, 1, 0});
+            transformation = glm::scale(transformation, glm::vec3{scaleCoef, 1, 0});
+            shader->Set("transform", transformation);
+        }
+        if (mixValue.first) {
+            shader->Set("mix_value", mixValue.second);
+        }
+        shader->Set("texId", texId);
         shader->UnUse();
 
         textures[texId]->Bind();
@@ -86,20 +93,20 @@ int main() {
         triangle.Unbind();
         textures[texId]->Unbind();
 
-        ImGui::Begin("Settings");
+       {ImGui::Begin("Settings");
             ImGui::TextWrapped("Shader settings:");
-            ImGui::SliderFloat("Texture mix value", &mixValue, 0.0f, 1.0f);
-            ImGui::SliderAngle("Rotation", &angle);
-            ImGui::SliderAngle("X", &xAngle);
-            ImGui::SliderAngle("Y", &yAngle);
+            mixValue.first = ImGui::SliderFloat("Texture mix value", &mixValue.second, 0.0f, 1.0f);
+            angle.first = ImGui::SliderAngle("Rotation", &angle.second);
+            xAngle.first = ImGui::SliderAngle("X", &xAngle.second);
+            yAngle.first = ImGui::SliderAngle("Y", &yAngle.second);
             ImGui::Separator();
             ImGui::TextWrapped("Global settings:");
             ImGui::ColorEdit3("Clear color", &bgcolor[0]);
             ImGui::Separator();
             ImGui::TextWrapped("Information:");
-            ImGui::TextWrapped("Application average %.3f ms/frame (%.1f FPS)",
-                               1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::End();
+            auto framerate{ ImGui::GetIO().Framerate };
+            ImGui::TextWrapped("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / framerate, framerate);
+        ImGui::End();}
 
         ImGui::Begin("Textures");
             for(size_t i = 0; i < textures.size(); ++i) {
