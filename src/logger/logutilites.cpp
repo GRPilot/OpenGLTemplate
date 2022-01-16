@@ -65,7 +65,7 @@ private:
 
 class DefaultFormatter {
 public:
-    static util::nstring header() { }
+    static util::nstring header() { return {}; }
     static util::nstring format(const Record &record) {
         tm t;
         util::localtime_s(&t, &record.getTime().time);
@@ -82,7 +82,7 @@ public:
 
 class SimpleFormatter {
 public:
-    static util::nstring header() { }
+    static util::nstring header() { return {}; }
     static util::nstring format(const Record &record) {
         tm t;
         util::localtime_s(&t, &record.getTime().time);

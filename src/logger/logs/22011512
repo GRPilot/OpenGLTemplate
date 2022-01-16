@@ -1,5 +1,0 @@
-﻿2022-01-15 12:46:24.252 INFO  [896] [main@28] [main] scaleCoef coef: 0.585938
-2022-01-15 12:46:24.264 ERROR [896] [Shader::loadFormFile@128] [Shader] Cannot load 'resources/shaders/vs.glsl' file: ios_base::failbit set: iostream stream error
-2022-01-15 12:46:24.265 ERROR [896] [Shader::loadFormFile@128] [Shader] Cannot load 'resources/shaders/fs.glsl' file: ios_base::failbit set: iostream stream error
-2022-01-15 12:46:24.268 ERROR [896] [Shader::Shader@51] [Shader] Failed while creating
-2022-01-15 12:46:24.269 ERROR [896] [main@41] [main] Cannot create shader: Failed while creating
